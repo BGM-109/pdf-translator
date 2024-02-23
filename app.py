@@ -30,6 +30,7 @@ def text_combine(dir):
         with open(dir + file, 'r') as f:
             text = f.read()
             f.close()
+            result += f'\n---------------------------page{file.split(".")[0]}---------------------------\n'
             result += text
     
     # write to file
@@ -39,11 +40,33 @@ def text_combine(dir):
 
 
 def translate(text):
-    translator = Translator()
-    result = translator.translate(text, dest='ko')
-    print(result.text)
-    return result.text
+    # find \n index
+    n_index = []
+    for i in range(len(text)):
+        if text[i] == '\n':
+            n_index.append(i)
+        
+    # remove \n
+    text = text.replace('\n', ' ')
 
+    translator = Translator()
+
+    result = translator.translate(text, dest='ko')
+    
+    answer = list(result.text)
+
+    # add \n
+    for i, t in enumerate(answer):
+        if n_index == []:
+            continue
+
+        if i == n_index[0]:
+            answer[i] = t + '\n'
+            n_index.pop(0)
+    
+    return ''.join(answer)
+
+    
 def operation():
     with open(path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
@@ -53,6 +76,10 @@ def operation():
 
         for i in range(size):
             page = reader.pages[i]
+            # translate from pdf to pdf
+            trans_page = page.extract_text()
+
+
             text = page.extract_text()
             # write to file
             directory = output + str(i) + '.txt'
@@ -62,12 +89,16 @@ def operation():
                 with open(directory, 'w') as f:
                     # translate the text
                     t_text = translate(text)
-
                     f.write(t_text)
                     print('파일을 쓰고 있습니다.')
                     f.close()
+
+    
+    text_combine(output)
+
                    
-          
+operation()
+
 
 
 
@@ -75,5 +106,3 @@ def operation():
 
 
 
-
-text_combine(output)
